@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const express = require('express');
 const app = express();
@@ -20,10 +20,32 @@ const run = async() => {
 
         await client.connect();
         const toolsCollection = client.db("DeshMata").collection("tools");
+        const userCollection = client.db('DeshMata').collection("users");
+
+        //User
+        app.put('/user/:email', async(req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email : email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+              };
+            const result  = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
 
         app.get('/tools', async(req, res) => {
             const query = {};
             const result = await toolsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        //Purchase
+        app.get('/purchase/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await toolsCollection.findOne(query);
             res.send(result);
         })
      
