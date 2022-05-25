@@ -14,6 +14,23 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.blvlf.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+//JWT Middleware
+const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if(!authHeader){
+        return res.status(401).send({message: "Unauthorized Access"})
+    }
+    const token = authHeader.split(' ')[1];
+    console.log(token);
+    jwt.verify(token, process.env.JWT_TOKEN_SECRET, function(err, decoded){
+        if(err){
+            return res.status(403).send({message: "Forbidden Access"})
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 
 const run = async() => {
 
@@ -56,19 +73,24 @@ const run = async() => {
             res.send(result);
         })
      
-        //Orders
-
+        //User Orders
         app.post('/order', async(req, res) => {
             const newOrder = req.body;
             const result = await orderCollection.insertOne(newOrder);
             res.send(result) 
         })
 
-        app.get('/order/:email', async(req, res) => {
+        app.get('/order/:email', verifyJWT,  async(req, res) => {
             const email = req.params.email;
-            const query = {email: email}
-            const result = await orderCollection.find(query).toArray();
-            res.send(result);
+            const decodedEmail = req.decoded.email;
+            if(email === decodedEmail){
+                const query = {email: email}
+                const result = await orderCollection.find(query).toArray();
+               return res.send(result);
+            }
+            else{
+                return res.status(403).send({message: "Forbidden Access"})
+            }
         })
 
         app.delete('/myorder/:email', async(req, res) => {
@@ -103,7 +125,6 @@ const run = async() => {
             res.send(result);
         })
 
-        
 
         //Review
         app.post('/addreview', async(req, res) => {
@@ -119,6 +140,68 @@ const run = async() => {
         })
 
 
+        //Make Admin
+        app.get('/allusers', verifyJWT, async(req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.put('/admin/:email', verifyJWT, async(req, res) => {
+            const email = req.params.email;
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester })
+            if(requesterAccount.role === 'admin'){
+                const filter = {email: email};
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result =await userCollection.updateOne(filter, updateDoc);
+                res.send({ result });
+            }
+            else{
+                res.status(403).send({message: 'Access Forbidden'})
+            }
+        })
+
+        app.get('/checkadmin/:email', async(req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email })
+            const isAdmin = user.role === 'admin';
+            res.send({admin: isAdmin})
+
+        })
+
+        //Add Product
+        app.post('/addproduct', verifyJWT, async(req, res) => {
+            const product = req.body;
+            const result = await toolsCollection.insertOne(product);
+            res.send(result)
+        })
+
+        //Manage Product
+        app.delete('/deleteproduct/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await toolsCollection.deleteOne(query)
+            res.send(result)
+        })
+
+
+        //Manage All Orders
+        app.get('/allorders',  async(req, res) => {
+            const query = {};
+            const result = await orderCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.delete('/allorder/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await orderCollection.deleteOne(query)
+            res.send(result)
+        })
+
+
     }
 
     finally{
@@ -127,23 +210,6 @@ const run = async() => {
 }
 
 run().catch(console.dir);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
