@@ -140,7 +140,7 @@ const run = async() => {
         })
 
 
-        //Make Admin
+        //Make 
         app.get('/allusers', verifyJWT, async(req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
