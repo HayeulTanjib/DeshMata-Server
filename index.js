@@ -20,15 +20,8 @@ const verifyJWT = (req, res, next) => {
     if(!authHeader){
         return res.status(401).send({message: "Unauthorized Access"})
     }
-    const token = authHeader.split(' ')[1];
-    console.log(token);
-    jwt.verify(token, process.env.JWT_TOKEN_SECRET, function(err, decoded){
-        if(err){
-            return res.status(403).send({message: "Forbidden Access"})
-        }
-        req.decoded = decoded;
-        next();
-    })
+
+
 }
 
 
@@ -142,7 +135,7 @@ const run = async() => {
 
         //Make Admin
         app.get('/allusers', verifyJWT, async(req, res) => {
-            
+            const result = await userCollection.find().toArray();
             res.send(result);
         })
 
