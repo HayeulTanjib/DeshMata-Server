@@ -65,7 +65,7 @@ const run = async() => {
             res.send(result);
         })
 
-        //Purchase
+        //Purchase Product
         app.get('/purchase/:id', async(req, res) => {
             const id = req.params.id;
             const query = {_id: ObjectId(id)}
@@ -126,7 +126,7 @@ const run = async() => {
         })
 
 
-        //Review
+        //User Review
         app.post('/addreview', async(req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
@@ -140,7 +140,7 @@ const run = async() => {
         })
 
 
-        //Make 
+        //Make Admin
         app.get('/allusers', verifyJWT, async(req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -194,12 +194,6 @@ const run = async() => {
             res.send(result);
         })
 
-        app.delete('/allorder/:id', async(req, res) => {
-            const id = req.params.id;
-            const query = {_id: ObjectId(id)}
-            const result = await orderCollection.deleteOne(query)
-            res.send(result)
-        })
 
 
     }
@@ -210,11 +204,6 @@ const run = async() => {
 }
 
 run().catch(console.dir);
-
-
-
-
-
 
 
 //Initial Setup Check
