@@ -142,7 +142,7 @@ const run = async() => {
 
         //Make Admin
         app.get('/allusers', verifyJWT, async(req, res) => {
-            const result = await userCollection.find().toArray();
+            
             res.send(result);
         })
 
@@ -172,7 +172,11 @@ const run = async() => {
         })
 
         //Add Product
-   
+        app.post('/addproduct', verifyJWT, async(req, res) => {
+            const product = req.body;
+            const result = await toolsCollection.insertOne(product);
+            res.send(result)
+        })
 
         //Manage Product
         app.delete('/deleteproduct/:id', async(req, res) => {
